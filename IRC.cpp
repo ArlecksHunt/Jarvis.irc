@@ -77,9 +77,8 @@ void Channel::removeUser(QString name) {
     foreach(QListWidgetItem* item, users.findItems(name,Qt::MatchCaseSensitive)) users.removeItemWidget(item);
 }
 void Channel::addMessage(QString origin,QString msg) {
-    //qDebug() << niceName(origin) << "\t" << msg.mid(7, msg.indexOf(' ', 7) - 7) << "\t" << jarmsg.mid(msg.indexOf("roles:") + 7, msg.indexOf(' ', msg.indexOf("roles:") + 7) - msg.indexOf("roles:") - 7);
     if (! wanswer.isEmpty() && niceName(origin) == "James_Jarvis" && msg.startsWith("@" + currentnick + ":") && msg.mid(3 + currentnick.length(), msg.indexOf(' ', 3 + currentnick.length()) - 3 - currentnick.length()) == wanswer) {
-        if (msg.mid(msg.indexOf("roles:") + 7, msg.indexOf(' and', msg.indexOf("roles:") + 7) - msg.indexOf("roles:") - 7).split(',').contains("cankill")) {
+        if (msg.mid(msg.indexOf("roles:") + 7, msg.indexOf(" and", msg.indexOf("roles:") + 7) - msg.indexOf("roles:") - 7).split(',').contains("cankill")) {
             send("Goodbye, cruel " + wanswer);
             QTimer::singleShot(2000, QCoreApplication::instance(), SLOT(quit()));
         } else {
