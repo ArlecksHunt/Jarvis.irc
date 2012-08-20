@@ -1,0 +1,21 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# IDE-dependent project-files
+*.pro.user*
+
+# other
+Makefile*
+object_script.*
+debug/
+release/
