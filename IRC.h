@@ -29,6 +29,7 @@ signals:
     void send_cmd(QString);
 public slots:
     void send(QString);
+    void currentScopeChanged(const QString &currentScope);
 
 private slots:
     void highlight(QString);

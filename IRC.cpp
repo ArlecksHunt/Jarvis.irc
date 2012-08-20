@@ -18,6 +18,7 @@ Channel* Client::newChannel(QString name) {
     TerminalPrinter *printer = new TerminalPrinter(*jclient);
     Channel* channel = new Channel(name, *jclient, *printer);
     connect(printer, SIGNAL(output(QString)), channel, SLOT(send(QString)));
+    connect(printer, SIGNAL(currentScopeChanged(const QString &)), channel, SLOT(currentScopeChanged(const QString&)));
     actual_channels.append(channel);
     /*QTreeWidgetItem* item = channels[name] = new QTreeWidgetItem(this,QStringList(name));
     item->setData(0,Qt::UserRole,QVariant::fromValue((QWidget*)channel));
@@ -81,7 +82,13 @@ void Channel::addMessage(QString origin,QString msg) {
         if (msg.mid(msg.indexOf("roles:") + 7, msg.indexOf(' and', msg.indexOf("roles:") + 7) - msg.indexOf("roles:") - 7).split(',').contains("cankill")) {
             send("Goodbye, cruel " + wanswer);
             QTimer::singleShot(2000, QCoreApplication::instance(), SLOT(quit()));
-        } else send("@" + wanswer + ": SUCK MY DICK");
+        } else {
+            send("@" + wanswer + ": SUCK MY DICK");
+            send("hubot deal with it");
+            send("hubot " + wanswer + " is an idiot");
+            send("hubot it's been 0 days since " + wanswer + " GOT OWNED");
+            send("hubot ascii JARC RULEZ");
+        }
         wanswer.clear();
     }
     if (! msg.startsWith("jarc ")) return;
@@ -92,22 +99,27 @@ void Channel::addMessage(QString origin,QString msg) {
         wanswer = niceName(origin);
     } else if (msg.startsWith("enter ")) QMetaObject::invokeMethod(&jclient, "enterScope", Q_ARG(QString, msg.right(msg.length() - 6)));
     else if (msg.startsWith("leave ")) QMetaObject::invokeMethod(&jclient, "leaveScope", Q_ARG(QString, msg.right(msg.length() - 6)));
-    else if (msg.startsWith("open ")) {
-        QMetaObject::invokeMethod(&printer, "openScope", Q_ARG(QString, msg.right(msg.length() - 5)));
-        currentnick = "jarc[" + msg.right(msg.length() - 5) + "]";
-        send_cmd(QString("NICK %1").arg(currentnick));
-    } else if (msg == "modules") QMetaObject::invokeMethod(&printer, "printModules");
+    else if (msg.startsWith("open ")) QMetaObject::invokeMethod(&printer, "openScope", Q_ARG(QString, msg.right(msg.length() - 5)));
+    else if (msg == "modules") QMetaObject::invokeMethod(&printer, "printModules");
     else if (msg.startsWith("unload ")) QMetaObject::invokeMethod(&jclient, "unloadPkg", Q_ARG(QString, msg.right(msg.length() - 7)));
     else if (msg.startsWith("load ")) QMetaObject::invokeMethod(&jclient, "loadPkg", Q_ARG(QString, msg.right(msg.length() - 5)));
-    else if (msg.startsWith("delete ")) QMetaObject::invokeMethod(&jclient, "deleteScope", Q_ARG(QString, msg.right(msg.length() - 6)));
+    else if (msg.startsWith("delete ")) QMetaObject::invokeMethod(&jclient, "deleteScope", Q_ARG(QString, msg.right(msg.length() - 7)));
     else if (msg == "clients") QMetaObject::invokeMethod(&printer, "printClients");
     else if (msg == "scopes") QMetaObject::invokeMethod(&printer, "printScopes");
+    else if (msg == "variables") QMetaObject::invokeMethod(&printer, "printVariables");
+    else if (msg == "functions") QMetaObject::invokeMethod(&printer, "printFunctions");
     else QMetaObject::invokeMethod(&printer, "msgToScope", Q_ARG(QString, msg));
     text.appendPlainText(niceName(origin)+": "+msg+"\n");
     if(isHidden() && !origin.isEmpty()) emit notify(channel,msg);
 }
 void Channel::send() { emit send(channel,lineEdit.text()); }
 void Channel::send(QString msg) { emit send(channel,msg); }
+
+void Channel::currentScopeChanged(const QString &currentScope)
+{
+    currentnick = "jarc[" + currentScope + "]";
+    send_cmd(QString("NICK %1").arg(currentnick));
+}
 void Channel::highlight(QString name) { lineEdit.setText(name+", "); }
 
 Network::Network(QUrl url,Client* client) : client(client) {
@@ -142,12 +154,12 @@ void Network::receive() {
         QString cmd = params[1];
         QString target = params[2];
         if(cmd=="PRIVMSG") {
-            if(params[3]=="\01VERSION\01") send("PRIVMSG "+origin+" :"+"\01VERSION QtChatClient Linux MatthiasF\01");
+            if(params[3]=="\01VERSION\01") send("PRIVMSG "+origin+" :"+"\01VERSION Jarvis.ircF\01");
             else if(target==user) getChannel(origin)->addMessage(origin,params[3]);
             else getChannel(target)->addMessage(origin,params[3]);
         }
         else if(cmd=="JOIN") getChannel(target)->addUser(origin);
-        else if(cmd=="PART"||cmd=="QUIT") getChannel(target)->removeUser(origin);
+        //else if(cmd=="PART"||cmd=="QUIT") getChannel(target)->removeUser(origin);
         else if(cmd=="332") getChannel(params[3])->addMessage("Topic",params[4]);
         else if(cmd=="353") foreach(QString user,params[5].split(' ')) getChannel(params[4])->addUser(user);
     }

@@ -8,7 +8,7 @@ QT       += core network
 
 #QT       -= gui
 QMAKE_CXXFLAGS += -std=c++11
-TARGET = console-client
+TARGET = Jarvis-irc
 CONFIG   += console
 CONFIG   -= app_bundle
 
