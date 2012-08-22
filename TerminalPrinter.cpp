@@ -10,10 +10,10 @@ TerminalPrinter::TerminalPrinter(JarvisClient &client) : client(client), qtout(s
    connect(&client, SIGNAL(newClient(const QString &, const QString &)), SLOT(newClient(const QString &, const QString &)));
    connect(&client, SIGNAL(clientLeft(const QString &, const QString &)), SLOT(clientLeft(const QString &, const QString &)));
    connect(&client, SIGNAL(error(JarvisClient::ClientError)), SLOT(error(JarvisClient::ClientError)));
-   connect(&client, SIGNAL(pkgLoaded(const QVariant &)), SLOT(pkgLoaded(const QVariant &)));
+   connect(&client, SIGNAL(pkgLoaded(const ModulePackage &)), SLOT(pkgLoaded(const ModulePackage &)));
    connect(&client, SIGNAL(pkgUnloaded(const QString &)), SLOT(pkgUnloaded(const QString &)));
-   connect(&client, SIGNAL(enteredScope(const QString &, const QVariant &)), SLOT(enteredScope(const QString &, const QVariant &)));
-   connect(&client, SIGNAL(receivedInitInfo(const QVariant &, const QVariant &)), SLOT(receivedInitInfo(const QVariant &, const QVariant &)));
+   connect(&client, SIGNAL(enteredScope(const QString &, const Scope &)), SLOT(enteredScope(const QString &, const Scope &)));
+   connect(&client, SIGNAL(receivedInitInfo(const QStringList &, const QList<ModulePackage> &)), SLOT(receivedInitInfo(const QStringList &, const QList<ModulePackage> &)));
    connect(&client, SIGNAL(disconnected()), SLOT(disconnected()));
 }
 
@@ -63,13 +63,13 @@ void TerminalPrinter::error(JarvisClient::ClientError error)
    emit output("Client Error " + QString::number(error));
 }
 
-void TerminalPrinter::pkgLoaded(const QVariant &pkg)
+void TerminalPrinter::pkgLoaded(const ModulePackage &pkg)
 {
    emit output("Package loaded:");
-   printPackage(pkg.value<ModulePackage>());
+   printPackage(pkg);
 
 
-   pkgs.append(pkg.value<ModulePackage>());
+   pkgs.append(pkg);
 }
 
 void TerminalPrinter::pkgUnloaded(const QString &name)
@@ -80,32 +80,31 @@ void TerminalPrinter::pkgUnloaded(const QString &name)
    pkgs.erase(std::remove_if(pkgs.begin(), pkgs.end(), [&](const ModulePackage &pkg) { return pkg.name == name; }));
 }
 
-void TerminalPrinter::enteredScope(const QString &name, const QVariant &info)
+void TerminalPrinter::enteredScope(const QString &name, const Scope &info)
 {
-   Scope infoScope = info.value<Scope>();
    emit output("Entered scope " + name + "; Clients:");
-   for (const auto &client : infoScope.clients) emit output(client + " ");
+   for (const auto &client : info.clients) emit output(client + " ");
    emit output("Variables:");
-   doPrintVars(infoScope);
+   doPrintVars(info);
    emit output("Functions:");
-   doPrintFuncs(infoScope);
+   doPrintFuncs(info);
 
-   scopeByName.insert(name, infoScope);
+   scopeByName.insert(name, info);
 }
 
-void TerminalPrinter::receivedInitInfo(const QVariant &scopes, const QVariant &pkgs)
+void TerminalPrinter::receivedInitInfo(const QStringList &scopes, const QList<ModulePackage> &pkgs)
 {
    emit output("InitInfo:");
    emit output("Scopes:");
-   for (const auto &scope : scopes.value<QStringList>()) {
+   for (const auto &scope : scopes) {
        emit output(scope + " ");
        serverScopes.append(scope);
    }
    emit output("Packages:");
-   for (const auto &pkg : pkgs.value<QList<ModulePackage> >()) {
+   for (const auto &pkg : pkgs) {
        printPackage(pkg);
    }
-   this->pkgs = pkgs.value<QList<ModulePackage> >();
+   this->pkgs = pkgs;
 
 
 }
@@ -148,21 +147,29 @@ void TerminalPrinter::leaveScope(const QString &name)
 
 void TerminalPrinter::printPackage(const ModulePackage &pkg)
 {
-    emit output("Package Name Module Name Module Description");
     emit output(pkg.name);
-    emit output(" Terminals:");
+    emit output(" * Terminals:");
     for (const auto &mod : pkg.terminals) {
-        emit output("  " + mod.name + " " + mod.description);
+        emit output("  > " + mod.name);
+        emit output("   - description: " + mod.description);
     }
-    emit output(" Operators:");
+    emit output(" * Operators:");
     for (const auto &mod : pkg.operators) {
-        emit output("  " + mod.name + " " + mod.description);
+        emit output("  > " + mod.name);
+        emit output("   - description: " + mod.description);
+        emit output("   - matches: " + ((mod.matches == nullptr)? "<dynamic>" : *mod.matches));
+        emit output("   - priority: " + (mod.priority.first ? QString::number(mod.priority.second) : "<dynamic>"));
+        if (mod.associativity.first)
+            emit output(QString("   - associativity: ") + ((mod.associativity.second == OperatorModule::LEFT)? "left" : "right"));
+        else emit output("   - associativity: <dynamic>");
     }
-    emit output(" Functions:");
+    emit output(" * Functions:");
     for (const auto &mod : pkg.functions) {
-        emit output("  " + mod.name + " " + mod.description);
+        emit output("  > " + mod.name);
+        emit output("   - description: " + mod.description);
+        emit output("   - matches: " + ((mod.matches == nullptr)? "<dynamic>" : (mod.matches->first + " | " + mod.matches->second)));
+        emit output("   - priority: " + (mod.priority.first ? QString::number(mod.priority.second) : "<dynamic>"));
     }
-
 }
 
 void TerminalPrinter::doPrintVars(const Scope &scope)

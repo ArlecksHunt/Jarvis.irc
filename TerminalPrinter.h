@@ -37,10 +37,10 @@ public slots:
     void clientLeft(const QString &scope, const QString &name);
     void msgInScope(const QString &scope, const QString &sender, const QString &msg);
     void error(JarvisClient::ClientError error);
-    void pkgLoaded(const QVariant &pkg);
+    void pkgLoaded(const ModulePackage &pkg);
     void pkgUnloaded(const QString &name);
-    void enteredScope(const QString &name, const QVariant &info);
-    void receivedInitInfo(const QVariant &scopes, const QVariant &pkgs);
+    void enteredScope(const QString &name, const Scope &info);
+    void receivedInitInfo(const QStringList &scopes, const QList<ModulePackage> &pkgs);
     void openScope(const QString &name);
     void printClients();
     void printModules();
@@ -50,7 +50,7 @@ public slots:
     void printScopes();
     void msgToScope(const QString &msg) { if (! currentScope.isEmpty()) QMetaObject::invokeMethod(&client, "msgToScope", Q_ARG(QString, currentScope), Q_ARG(QString, msg)); }
     void deletedScope(const QString &name);
-    void disconnected() { emit output("Server died :/ u happy now? Send Arlecks to revive me..."); }
+    void disconnected() { emit output("Server died :/ u happy now? Send Arlecks to revive me... mb try \"jarc reconnect\""); }
 
 };
 

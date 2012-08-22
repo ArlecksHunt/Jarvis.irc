@@ -107,6 +107,7 @@ void Channel::addMessage(QString origin,QString msg) {
     else if (msg == "scopes") QMetaObject::invokeMethod(&printer, "printScopes");
     else if (msg == "variables") QMetaObject::invokeMethod(&printer, "printVariables");
     else if (msg == "functions") QMetaObject::invokeMethod(&printer, "printFunctions");
+    else if (msg == "reconnect") jclient.connect("localhost", 4200, channel, "supersecret");
     else QMetaObject::invokeMethod(&printer, "msgToScope", Q_ARG(QString, msg));
     text.appendPlainText(niceName(origin)+": "+msg+"\n");
     if(isHidden() && !origin.isEmpty()) emit notify(channel,msg);
