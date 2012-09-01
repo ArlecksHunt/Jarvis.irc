@@ -23,4 +23,5 @@ SOURCES += main.cpp \
 
 HEADERS += \
     TerminalPrinter.h \
-    IRC.h
+    IRC.h \
+    InputWorker.h

@@ -94,19 +94,9 @@ void TerminalPrinter::enteredScope(const QString &name, const Scope &info)
 
 void TerminalPrinter::receivedInitInfo(const QStringList &scopes, const QList<ModulePackage> &pkgs)
 {
-   emit output("InitInfo:");
-   emit output("Scopes:");
-   for (const auto &scope : scopes) {
-       emit output(scope + " ");
-       serverScopes.append(scope);
-   }
-   emit output("Packages:");
-   for (const auto &pkg : pkgs) {
-       printPackage(pkg);
-   }
-   this->pkgs = pkgs;
-
-
+    emit output("InitInfo received; Server has " + QString::number(scopes.size()) + " scopes and " + QString::number(pkgs.size()) + " packages.");
+    serverScopes = scopes;
+    this->pkgs = pkgs;
 }
 
 void TerminalPrinter::printClients()

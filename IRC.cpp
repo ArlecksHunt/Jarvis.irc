@@ -92,7 +92,6 @@ void Channel::addMessage(QString origin,QString msg) {
     }
     if (! msg.startsWith("jarc ")) return;
     msg = msg.mid(5);
-    qDebug() << niceName(origin);
     if (msg == "die") {
         send("hubot what role does " + niceName(origin) + " have");
         wanswer = niceName(origin);
@@ -108,6 +107,21 @@ void Channel::addMessage(QString origin,QString msg) {
     else if (msg == "variables") QMetaObject::invokeMethod(&printer, "printVariables");
     else if (msg == "functions") QMetaObject::invokeMethod(&printer, "printFunctions");
     else if (msg == "reconnect") jclient.connect("localhost", 4200, channel, "supersecret");
+    else if (msg == "help") {
+        send("jarc ...");
+        send("enter [scope]");
+        send("open [scope]");
+        send("leave [scope]");
+        send("delete [scope]");
+        send("die");
+        send("load [modulepkg]");
+        send("unload [modulepkg]");
+        send("clients");
+        send("scopes");
+        send("variables");
+        send("functions");
+        send("reconnect");
+    }
     else QMetaObject::invokeMethod(&printer, "msgToScope", Q_ARG(QString, msg));
     text.appendPlainText(niceName(origin)+": "+msg+"\n");
     if(isHidden() && !origin.isEmpty()) emit notify(channel,msg);
