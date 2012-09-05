@@ -181,7 +181,10 @@ void Network::receive() {
 void Network::send(QString cmd) { write((cmd+"\r\n").toUtf8()); }
 void Network::send(QString target,QString msg) {
     //getChannel(target)->addMessage(user,msg);
-    queue.emplace("PRIVMSG "+target+" :"+msg);
+    while (! msg.isEmpty()) {
+        queue.emplace("PRIVMSG "+target+" :"+msg.left(400));
+        msg.remove(0, 400);
+    }
 }
 
 
