@@ -152,6 +152,7 @@ void TerminalPrinter::printPackage(const ModulePackage &pkg)
         if (mod.associativity.first)
             emit output(QString("   - associativity: ") + ((mod.associativity.second == OperatorModule::LEFT)? "left" : "right"));
         else emit output("   - associativity: <dynamic>");
+        emit output(QString("   - needsParseForMatch: ") + ((mod.needsParseForMatch) ? "true" : "false"));
     }
     emit output(" * Functions:");
     for (const auto &mod : pkg.functions) {
@@ -180,4 +181,13 @@ void TerminalPrinter::openScope(const QString &name)
 {
     if (scopeByName.contains(name)) setCurrentScope(name);
     else emit output("Enter the scope before opening it.");
+}
+
+void TerminalPrinter::disconnected()
+{
+    emit output("Server died :/ u happy now? Send Arlecks to revive me... mb try \"jarc reconnect\"");
+    setCurrentScope();
+    scopeByName.clear();
+    serverScopes.clear();
+    pkgs.clear();
 }

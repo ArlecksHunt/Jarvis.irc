@@ -21,7 +21,7 @@ private:
 
     void doPrintVars(const Scope &scope);
     void doPrintFuncs(const Scope &scope);
-    void setCurrentScope(const QString &name) { currentScope = name; emit currentScopeChanged(name); }
+    void setCurrentScope(const QString &name = QString()) { currentScope = name; emit currentScopeChanged(name); }
 
 public:
     explicit TerminalPrinter(JarvisClient &client);
@@ -50,7 +50,7 @@ public slots:
     void printScopes();
     void msgToScope(const QString &msg) { if (! currentScope.isEmpty()) QMetaObject::invokeMethod(&client, "msgToScope", Q_ARG(QString, currentScope), Q_ARG(QString, msg)); }
     void deletedScope(const QString &name);
-    void disconnected() { emit output("Server died :/ u happy now? Send Arlecks to revive me... mb try \"jarc reconnect\""); }
+    void disconnected();
 
 };
 

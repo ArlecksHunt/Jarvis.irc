@@ -27,6 +27,7 @@ signals:
     void notify(QString,QString);
     void send(QString,QString);
     void send_cmd(QString);
+    void stopTransmission();
 public slots:
     void send(QString);
     void currentScopeChanged(const QString &currentScope);
@@ -75,6 +76,7 @@ private slots:
     void send(QString);
     void send(QString,QString);
     void actual_send() { if (! queue.empty()) { send(queue.front()); queue.pop(); } }
+    void stopTransmission() { std::queue<QString>().swap(queue); }
 private:
     Channel* getChannel(QString);
 

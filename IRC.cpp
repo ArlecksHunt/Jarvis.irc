@@ -107,6 +107,7 @@ void Channel::addMessage(QString origin,QString msg) {
     else if (msg == "variables") QMetaObject::invokeMethod(&printer, "printVariables");
     else if (msg == "functions") QMetaObject::invokeMethod(&printer, "printFunctions");
     else if (msg == "reconnect") jclient.connect("localhost", 4200, channel, "supersecret");
+    else if (msg == "stop") emit stopTransmission();
     else if (msg == "help") {
         send("jarc ...");
         send("enter [scope]");
@@ -121,6 +122,7 @@ void Channel::addMessage(QString origin,QString msg) {
         send("variables");
         send("functions");
         send("reconnect");
+        send("stop");
     }
     else QMetaObject::invokeMethod(&printer, "msgToScope", Q_ARG(QString, msg));
     text.appendPlainText(niceName(origin)+": "+msg+"\n");
@@ -155,6 +157,7 @@ Channel* Network::getChannel(QString name) {
     Channel* channel = channels[name] = client->newChannel(name);
     connect(channel,SIGNAL(send(QString,QString)),SLOT(send(QString,QString)));
     connect(channel, SIGNAL(send_cmd(QString)), SLOT(send(QString)));
+    connect(channel, SIGNAL(stopTransmission()), SLOT(stopTransmission()));
     return channel;
 }
 void Network::receive() {
