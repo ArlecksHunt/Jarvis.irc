@@ -121,6 +121,7 @@ void Channel::addMessage(QString origin,QString msg) {
         send("scopes");
         send("variables");
         send("functions");
+        send("modules");
         send("reconnect");
         send("stop");
     }
