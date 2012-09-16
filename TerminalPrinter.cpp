@@ -158,7 +158,7 @@ void TerminalPrinter::printPackage(const ModulePackage &pkg)
     for (const auto &mod : pkg.functions) {
         emit output("  > " + mod.name);
         emit output("   - description: " + mod.description);
-        emit output("   - matches: " + ((mod.matches == nullptr)? "<dynamic>" : (mod.matches->first + " | " + mod.matches->second)));
+        emit output("   - matches: " + ((mod.matches == nullptr)? "<dynamic>" : (mod.matches->first + " | " + QString::number(mod.matches->second))));
         emit output("   - priority: " + (mod.priority.first ? QString::number(mod.priority.second) : "<dynamic>"));
     }
 }

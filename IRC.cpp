@@ -107,7 +107,7 @@ void Channel::addMessage(QString origin,QString msg) {
     else if (msg == "variables") QMetaObject::invokeMethod(&printer, "printVariables");
     else if (msg == "functions") QMetaObject::invokeMethod(&printer, "printFunctions");
     else if (msg == "reconnect") jclient.connect("localhost", 4200, channel, "supersecret");
-    else if (msg == "stop") emit stopTransmission();
+    else if (msg == "stop" || msg == "stahp") emit stopTransmission();
     else if (msg == "help") {
         send("jarc ...");
         send("enter [scope]");
