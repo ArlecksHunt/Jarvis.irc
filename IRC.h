@@ -30,7 +30,7 @@ signals:
     void stopTransmission();
 public slots:
     void send(QString);
-    void currentScopeChanged(const QString &currentScope);
+    void currentRoomChanged(const QString &currentRoom);
 
 private slots:
     void highlight(QString);
@@ -44,6 +44,8 @@ private:
     QLineEdit lineEdit;
     JarvisClient &jclient;
     TerminalPrinter &printer;
+    bool multiline{false};
+    QString mlBuff;
 };
 
 class Client : public QObject {

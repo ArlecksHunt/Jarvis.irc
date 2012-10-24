@@ -18,7 +18,7 @@ Channel* Client::newChannel(QString name) {
     TerminalPrinter *printer = new TerminalPrinter(*jclient);
     Channel* channel = new Channel(name, *jclient, *printer);
     connect(printer, SIGNAL(output(QString)), channel, SLOT(send(QString)));
-    connect(printer, SIGNAL(currentScopeChanged(const QString &)), channel, SLOT(currentScopeChanged(const QString&)));
+    connect(printer, SIGNAL(currentRoomChanged(const QString &)), channel, SLOT(currentRoomChanged(const QString&)));
     actual_channels.append(channel);
     /*QTreeWidgetItem* item = channels[name] = new QTreeWidgetItem(this,QStringList(name));
     item->setData(0,Qt::UserRole,QVariant::fromValue((QWidget*)channel));
@@ -95,46 +95,54 @@ void Channel::addMessage(QString origin,QString msg) {
     if (msg == "die") {
         send("hubot what role does " + niceName(origin) + " have");
         wanswer = niceName(origin);
-    } else if (msg.startsWith("enter ")) QMetaObject::invokeMethod(&jclient, "enterScope", Q_ARG(QString, msg.right(msg.length() - 6)));
-    else if (msg.startsWith("leave ")) QMetaObject::invokeMethod(&jclient, "leaveScope", Q_ARG(QString, msg.right(msg.length() - 6)));
-    else if (msg.startsWith("open ")) QMetaObject::invokeMethod(&printer, "openScope", Q_ARG(QString, msg.right(msg.length() - 5)));
+    } else if (msg.startsWith("enter ")) QMetaObject::invokeMethod(&jclient, "enterRoom", Q_ARG(QString, msg.right(msg.length() - 6)));
+    else if (msg.startsWith("leave ")) QMetaObject::invokeMethod(&jclient, "leaveRoom", Q_ARG(QString, msg.right(msg.length() - 6)));
+    else if (msg.startsWith("open ")) QMetaObject::invokeMethod(&printer, "openRoom", Q_ARG(QString, msg.right(msg.length() - 5)));
     else if (msg == "modules") QMetaObject::invokeMethod(&printer, "printModules");
     else if (msg.startsWith("unload ")) QMetaObject::invokeMethod(&jclient, "unloadPkg", Q_ARG(QString, msg.right(msg.length() - 7)));
     else if (msg.startsWith("load ")) QMetaObject::invokeMethod(&jclient, "loadPkg", Q_ARG(QString, msg.right(msg.length() - 5)));
-    else if (msg.startsWith("delete ")) QMetaObject::invokeMethod(&jclient, "deleteScope", Q_ARG(QString, msg.right(msg.length() - 7)));
+    else if (msg.startsWith("delete ")) QMetaObject::invokeMethod(&jclient, "deleteRoom", Q_ARG(QString, msg.right(msg.length() - 7)));
     else if (msg == "clients") QMetaObject::invokeMethod(&printer, "printClients");
-    else if (msg == "scopes") QMetaObject::invokeMethod(&printer, "printScopes");
+    else if (msg == "rooms") QMetaObject::invokeMethod(&printer, "printRooms");
     else if (msg == "variables") QMetaObject::invokeMethod(&printer, "printVariables");
     else if (msg == "functions") QMetaObject::invokeMethod(&printer, "printFunctions");
     else if (msg == "reconnect") jclient.connect("localhost", 4200, channel, "supersecret");
     else if (msg == "stop" || msg == "stahp") emit stopTransmission();
-    else if (msg == "help") {
+    else if (msg == "ml") {
+        if (multiline) {
+            multiline = false;
+            if (mlBuff.right(1) == "\n") mlBuff.chop(1);
+            QMetaObject::invokeMethod(&printer, "msgToRoom", Q_ARG(QString, mlBuff));
+            mlBuff.clear();
+        } else multiline = true;
+    } else if (msg == "help") {
         send("jarc ...");
-        send("enter [scope]");
-        send("open [scope]");
-        send("leave [scope]");
-        send("delete [scope]");
+        send("enter [room]");
+        send("open [room]");
+        send("leave [room]");
+        send("delete [room]");
         send("die");
         send("load [modulepkg]");
         send("unload [modulepkg]");
         send("clients");
-        send("scopes");
+        send("rooms");
         send("variables");
         send("functions");
         send("modules");
         send("reconnect");
         send("stop");
     }
-    else QMetaObject::invokeMethod(&printer, "msgToScope", Q_ARG(QString, msg));
+    else if (multiline) mlBuff += msg + '\n';
+    else QMetaObject::invokeMethod(&printer, "msgToRoom", Q_ARG(QString, msg));
     text.appendPlainText(niceName(origin)+": "+msg+"\n");
     if(isHidden() && !origin.isEmpty()) emit notify(channel,msg);
 }
 void Channel::send() { emit send(channel,lineEdit.text()); }
 void Channel::send(QString msg) { emit send(channel,msg); }
 
-void Channel::currentScopeChanged(const QString &currentScope)
+void Channel::currentRoomChanged(const QString &currentRoom)
 {
-    currentnick = "jarc[" + currentScope + "]";
+    currentnick = "jarc[" + currentRoom + "]";
     send_cmd(QString("NICK %1").arg(currentnick));
 }
 void Channel::highlight(QString name) { lineEdit.setText(name+", "); }
@@ -185,14 +193,19 @@ void Network::receive() {
 void Network::send(QString cmd) { write((cmd+"\r\n").toUtf8()); }
 void Network::send(QString target,QString msg) {
     //getChannel(target)->addMessage(user,msg);
-    while (! msg.isEmpty()) {
-        queue.emplace("PRIVMSG "+target+" :"+msg.left(400));
-        msg.remove(0, 400);
+    for (auto &line : msg.split('\n')) {
+        while (! line.isEmpty()) {
+            queue.emplace("PRIVMSG "+target+" :"+line.left(400));
+            line.remove(0, 400);
+        }
     }
 }
 
 
 void Client::broadcast(QString msg)
 {
-    foreach(Channel *c, actual_channels) c->send(msg);
+    QStringList lines(msg.split('\n'));
+    std::string debug = msg.toStdString();
+    for (const auto &line : lines)
+        for (Channel *c : actual_channels) c->send(line);
 }
